@@ -16,6 +16,9 @@ dr is an infinitesimal element of arc length along the curve C, expressed in pol
 dS is an infinitesimal element of surface area, expressed in polar coordinates as r dr dθ
 ∇ × F is the curl of the vector field F
 
+##SYCL CODE
+#Find Flux through a surface area
+  Build and Run
  <img src="images/code_1.png">
  <img src="images/code_2.png">
  
