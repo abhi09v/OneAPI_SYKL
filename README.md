@@ -17,6 +17,7 @@ dS is an infinitesimal element of surface area, expressed in polar coordinates a
 ∇ × F is the curl of the vector field F
 
 ## SYCL CODE
+
 # Find Flux through a surface area
   Build and Run
  <img src="images/code_1.png">
