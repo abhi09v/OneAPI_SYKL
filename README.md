@@ -18,4 +18,7 @@ dS is an infinitesimal element of surface area, expressed in polar coordinates a
 
  <img src="images/code_1.png">
  <img src="images/code_2.png">
+ 
+ To compile and execute the code   
+    ! chmod 755 q; chmod 755 run_buffer.sh;if [ -x "$(command -v qsub)" ]; then ./q run_buffer.sh; else ./run_buffer.sh; fi
  <img src="images/build_run.png">
