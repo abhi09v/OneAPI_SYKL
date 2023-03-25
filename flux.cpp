@@ -1,0 +1,66 @@
+#include <CL/sycl.hpp>
+#include <iostream>
+#include <numeric>
+#include <cmath>
+
+using namespace cl::sycl;
+
+int main(int argc, char** argv) {
+
+  constexpr size_t NX = 10;
+  constexpr size_t NY = 10;
+  constexpr size_t NZ = 10;
+
+  std::vector<float> vel_x(NX*NY*NZ);
+  std::vector<float> vel_y(NX*NY*NZ);
+  std::vector<float> vel_z(NX*NY*NZ);
+  std::iota(vel_x.begin(), vel_x.end(), 1.0f); // populate with values 1, 2, 3, ..., NX*NY*NZ
+  std::iota(vel_y.begin(), vel_y.end(), 2.0f);
+  std::iota(vel_z.begin(), vel_z.end(), 3.0f);
+
+  float flux = 0.0f;
+
+  try {
+    queue q{gpu_selector{}};
+    std::cout << "Running on "
+              << q.get_device().get_info<info::device::name>()
+              << std::endl;
+
+    buffer<float, 1> vel_x_buf(vel_x.data(), range<1>(NX*NY*NZ));
+    buffer<float, 1> vel_y_buf(vel_y.data(), range<1>(NX*NY*NZ));
+    buffer<float, 1> vel_z_buf(vel_z.data(), range<1>(NX*NY*NZ));
+    buffer<float, 1> flux_buf(&flux, range<1>(1));
+
+    q.submit([&](handler& cgh) {
+      auto vel_x_acc = vel_x_buf.get_access<access::mode::read>(cgh);
+      auto vel_y_acc = vel_y_buf.get_access<access::mode::read>(cgh);
+      auto vel_z_acc = vel_z_buf.get_access<access::mode::read>(cgh);
+      auto flux_acc = flux_buf.get_access<access::mode::write>(cgh);
+
+      cgh.parallel_for<class stokes_theorem>(
+        range<1>(NX*NY*NZ),
+        [=](id<1> idx) {
+          const float x = static_cast<float>(idx % NX) + 0.5f;
+          const float y = static_cast<float>((idx / NX) % NY) + 0.5f;
+          const float z = static_cast<float>(idx / (NX*NY)) + 0.5f;
+
+          const float vx = vel_x_acc[idx];
+          const float vy = vel_y_acc[idx];
+          const float vz = vel_z_acc[idx];
+
+          const float r = std::sqrt(x*x + y*y + z*z);
+
+          flux_acc[0] += (2.0f * M_PI * r * vz) / 3.0f;
+        }
+      );
+    });
+
+    std::cout << "Flux: " << flux << std::endl;
+
+  } catch (sycl::exception& e) {
+    std::cerr << "SYCL exception caught: " << e.what() << std::endl;
+    return 1;
+  }
+
+  return 0;
+}
